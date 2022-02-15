@@ -34,7 +34,7 @@ namespace sykkelkonken.Service.Controllers
                     BikeRiderName = br.BikeRiderName,
                     BikeTeamCode = br.BikeTeamCode,
                     BikeTeamName = br.BikeTeamName,
-                    CQPoints = br.CQPoints,
+                    CQPoints = br.CQPoints ?? 0,
                     Nationality = br.Nationality,
                 });
             }
@@ -57,7 +57,7 @@ namespace sykkelkonken.Service.Controllers
                 BikeRiderName = br.BikeRiderName,
                 BikeTeamCode = br.BikeTeamCode,
                 BikeTeamName = br.BikeTeamName,
-                CQPoints = br.CQPoints,
+                CQPoints = br.CQPoints ?? 0,
                 Nationality = br.Nationality,
             };
         }
@@ -73,9 +73,41 @@ namespace sykkelkonken.Service.Controllers
                 BikeRiderName = br.BikeRiderName,
                 BikeTeamCode = br.BikeTeamCode,
                 BikeTeamName = br.BikeTeamName,
+                CQPoints = br.CQPoints ?? 0,
+                Nationality = br.Nationality,
+            }).OrderByDescending(b => b.CQPoints).ToList();
+        }
+
+        [HttpGet]
+        public IEnumerable<VMBikeRider> GetBySearchText(string searchtext, int year)
+        {
+            var bikeRiders = _unitOfWork.BikeRiders.GetBySearchText(searchtext, year);
+
+            return bikeRiders.Select(br => new VMBikeRider()
+            {
+                BikeRiderId = br.BikeRiderId,
+                BikeRiderName = br.BikeRiderName,
+                BikeTeamCode = br.BikeTeamCode,
+                BikeTeamName = br.BikeTeamName,
                 CQPoints = br.CQPoints,
                 Nationality = br.Nationality,
-            });
+            }).OrderByDescending(b => b.CQPoints).ToList();
+        }
+
+        [HttpGet]
+        public IEnumerable<VMBikeRider> GetBySearchTextYouth(string searchtext, int year)
+        {
+            var bikeRiders = _unitOfWork.BikeRiders.GetBySearchTextYouth(searchtext, year);
+
+            return bikeRiders.Select(br => new VMBikeRider()
+            {
+                BikeRiderId = br.BikeRiderId,
+                BikeRiderName = br.BikeRiderName,
+                BikeTeamCode = br.BikeTeamCode,
+                BikeTeamName = br.BikeTeamName,
+                CQPoints = br.CQPoints,
+                Nationality = br.Nationality,
+            }).OrderByDescending(b => b.CQPoints).ToList();
         }
     }
 }

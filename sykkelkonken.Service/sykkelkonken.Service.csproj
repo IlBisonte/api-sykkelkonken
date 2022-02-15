@@ -231,6 +231,7 @@
     <Compile Include="Controllers\ImportController.cs" />
     <Compile Include="Controllers\LoginController.cs" />
     <Compile Include="Controllers\ResultController.cs" />
+    <Compile Include="Controllers\StatsCompetitionTeamController.cs" />
     <Compile Include="Controllers\StatsController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
     <Compile Include="Filters\AddChallengeOnUnauthorizedResult.cs" />
@@ -241,10 +242,15 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="JwtManager.cs" />
+    <Compile Include="Models\BikeRaceResult\BikeRaceGCCLTeamResults.cs" />
     <Compile Include="Models\BikeRaceResult\BikeRaceGCCompetitionTeamResults.cs" />
+    <Compile Include="Models\BikeRaceResult\BikeRaceLeaderJerseyCLTeamResults.cs" />
     <Compile Include="Models\BikeRaceResult\BikeRaceLeaderJerseyCompetitionTeamResults.cs" />
+    <Compile Include="Models\BikeRaceResult\BikeRaceStageCLTeamResults.cs" />
     <Compile Include="Models\BikeRaceResult\BikeRaceStageCompetitionTeamResults.cs" />
+    <Compile Include="Models\BikeRaceResult\BikeRaceTotalCLTeamResults.cs" />
     <Compile Include="Models\BikeRaceResult\BikeRaceTotalCompetitionTeamResults.cs" />
+    <Compile Include="Models\BikeRaceResult\VMBikeRaceCLTeamResults.cs" />
     <Compile Include="Models\BikeRaceResult\VMBikeRaceCompetitionTeamResults.cs" />
     <Compile Include="Models\BikeRaceResult\VMBikeRiderResults.cs" />
     <Compile Include="Models\BikeRaceResult\VMCompetitionTeamBikeRiderResults.cs" />
@@ -252,6 +258,7 @@
     <Compile Include="Models\BikeRace\VMBikeRace.cs" />
     <Compile Include="Models\BikeRace\VMBikeRaceResult.cs" />
     <Compile Include="Models\BikeRace\VMBikeRaceResults.cs" />
+    <Compile Include="Models\BikeRace\VMBikeRaceSeasonPlacement.cs" />
     <Compile Include="Models\BikeRace\VMLeaderJerseyResult.cs" />
     <Compile Include="Models\BikeRace\VMStage.cs" />
     <Compile Include="Models\BikeRace\VMStageResult.cs" />
@@ -264,8 +271,22 @@
     <Compile Include="Models\CompetitionTeam\VMLotteryTeamBikeRider.cs" />
     <Compile Include="Models\CompetitionTeam\VMUpdateChampionsLeagueTeamBikeRider.cs" />
     <Compile Include="Models\CompetitionTeam\VMUpdateLotteryTeamBikeRider.cs" />
+    <Compile Include="Models\CompetitionTeam\VMUpdateYouthTeamBikeRider.cs" />
+    <Compile Include="Models\CompetitionTeam\VMYouthTeam.cs" />
+    <Compile Include="Models\CompetitionTeam\VMYouthTeamBikeRider.cs" />
     <Compile Include="Models\Import\VMImportBikeRiders.cs" />
+    <Compile Include="Models\Stats\CompetitionTeamPoints.cs" />
+    <Compile Include="Models\Stats\VMBikeRaceRanking.cs" />
+    <Compile Include="Models\Stats\VMBikeRiderPointsByBikeRace.cs" />
+    <Compile Include="Models\Stats\VMBikeRiderScoreAllTime.cs" />
     <Compile Include="Models\Stats\VMBikeRiderStats.cs" />
+    <Compile Include="Models\Stats\VMChampionsLeagueTeamStatsAllTime.cs" />
+    <Compile Include="Models\Stats\VMCompetitionTeamPointsByBikeRace.cs" />
+    <Compile Include="Models\Stats\VMCompetitionTeamPointsByBikeRaceCategoryId.cs" />
+    <Compile Include="Models\Stats\VMCompetitionTeamPointsPerBikeRace.cs" />
+    <Compile Include="Models\Stats\VMCompetitionTeamPointsPerStage.cs" />
+    <Compile Include="Models\Stats\VMCompetitionTeamStatsAllTime.cs" />
+    <Compile Include="Models\Stats\VmNoOfVictoriesByCompTeam.cs" />
     <Compile Include="Models\User\VMRefreshToken.cs" />
     <Compile Include="Models\User\VMUser.cs" />
     <Compile Include="Persistence\Interfaces\IBikeRaceRepository.cs" />
@@ -278,6 +299,7 @@
     <Compile Include="Persistence\Interfaces\IStatsRepository.cs" />
     <Compile Include="Persistence\Interfaces\IUnitOfWork.cs" />
     <Compile Include="Persistence\Interfaces\IUserRepository.cs" />
+    <Compile Include="Persistence\Interfaces\IYouthTeamRepository.cs" />
     <Compile Include="Persistence\Repository\BikeRaceRepository.cs" />
     <Compile Include="Persistence\Repository\BikeRiderRepository.cs" />
     <Compile Include="Persistence\Repository\ChampionsLeagueTeamRepository.cs" />
@@ -287,6 +309,7 @@
     <Compile Include="Persistence\Repository\SessionRepository.cs" />
     <Compile Include="Persistence\Repository\StatsRepository.cs" />
     <Compile Include="Persistence\Repository\UserRepository.cs" />
+    <Compile Include="Persistence\Repository\YouthTeamRepository.cs" />
     <Compile Include="Persistence\UnitOfWork.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -350,6 +373,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="Views\StatsCompetitionTeam\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="fonts\glyphicons-halflings-regular.woff2" />

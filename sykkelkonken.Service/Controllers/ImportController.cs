@@ -121,6 +121,8 @@ namespace sykkelkonken.Service.Controllers
                                         BikeRaceDetail bikeRaceDetail = new BikeRaceDetail();
                                         bikeRaceDetail.BikeRaceId = bikeRace.BikeRaceId;
                                         bikeRaceDetail.Year = year;
+                                        bikeRaceDetail.Name = bikeRace.Name;
+                                        bikeRaceDetail.CountryName = br["Country"].ToString();
                                         if (br["Date From"] != null)
                                         {
                                             DateTime dtFrom = new DateTime();
@@ -164,6 +166,8 @@ namespace sykkelkonken.Service.Controllers
                                         BikeRaceDetail bikeRaceDetail = new BikeRaceDetail();
                                         bikeRaceDetail.BikeRaceId = bikeRaceId;
                                         bikeRaceDetail.Year = year;
+                                        bikeRaceDetail.Name = br["Name"].ToString();
+                                        bikeRaceDetail.CountryName = br["Country"].ToString();
                                         if (br["Date From"] != null)
                                         {
                                             DateTime dtFrom = new DateTime();
@@ -219,7 +223,7 @@ namespace sykkelkonken.Service.Controllers
             return result;
         }
 
-        private bool IsMonument (string sBikeRaceName)
+        private bool IsMonument(string sBikeRaceName)
         {
             bool bIsMonument = false;
 
@@ -296,10 +300,34 @@ namespace sykkelkonken.Service.Controllers
 
                             foreach (DataRow br in tbl.Rows)
                             {
+                                if (br["Name"].ToString() == "")
+                                {
+                                    continue;
+                                }
                                 //if same name, then check nationality. if both the same then ???
                                 var bikeRider = _unitOfWork.BikeRiders.GetBikeRiderByNameNationality(br["Name"].ToString(), br["Nationality"].ToString());
                                 if (bikeRider != null)
                                 {
+                                    if (bikeRider.BirthDate == null)
+                                    {
+                                        var birthdate = br["UCICode"].ToString();
+                                        birthdate = birthdate.Substring(3);
+                                        var birthdateYear = birthdate.Substring(0, 4);
+                                        int iBDYear = year;
+                                        Int32.TryParse(birthdateYear, out iBDYear);
+                                        var birthdateMonth = birthdate.Substring(4, 2);
+                                        int iBDMonth = 1;
+                                        Int32.TryParse(birthdateMonth, out iBDMonth);
+                                        var birthdateDay = birthdate.Substring(6, 2);
+                                        int iBDDay = 1;
+                                        Int32.TryParse(birthdateDay, out iBDDay);
+                                        if (iBDMonth == 0 || iBDDay == 0)
+                                        {
+                                            iBDMonth = 1;
+                                            iBDDay = 1;
+                                        }
+                                        bikeRider.BirthDate = new DateTime(iBDYear, iBDMonth, iBDDay);
+                                    }
                                     //add new BikeRiderDetail the selected year
                                     //check to see if bikerider has detail the selected year and then update cqpoints
                                     IList<BikeRiderDetail> lstBikeRiderDetails = _unitOfWork.BikeRiders.GetBikeRiderDetails(brd => brd.BikeRiderId == bikeRider.BikeRiderId && brd.Year == year);
@@ -351,6 +379,23 @@ namespace sykkelkonken.Service.Controllers
                                     BikeRider newBikeRider = new BikeRider();
                                     newBikeRider.BikeRiderName = br["Name"].ToString();
                                     newBikeRider.Nationality = br["Nationality"].ToString();
+                                    var birthdate = br["UCICode"].ToString();
+                                    birthdate = birthdate.Substring(3);
+                                    var birthdateYear = birthdate.Substring(0, 4);
+                                    int iBDYear = year;
+                                    Int32.TryParse(birthdateYear, out iBDYear);
+                                    var birthdateMonth = birthdate.Substring(4, 2);
+                                    int iBDMonth = 1;
+                                    Int32.TryParse(birthdateMonth, out iBDMonth);
+                                    var birthdateDay = birthdate.Substring(6, 2);
+                                    int iBDDay = 1;
+                                    Int32.TryParse(birthdateDay, out iBDDay);
+                                    if (iBDMonth == 0 || iBDDay == 0)
+                                    {
+                                        iBDMonth = 1;
+                                        iBDDay = 1;
+                                    }
+                                    newBikeRider.BirthDate = new DateTime(iBDYear, iBDMonth, iBDDay);
                                     int bikeRiderId = _unitOfWork.BikeRiders.AddBikeRiderSave(newBikeRider);
 
                                     //add new BikeRiderDetail the selected year

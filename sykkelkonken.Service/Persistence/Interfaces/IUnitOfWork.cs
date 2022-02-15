@@ -14,6 +14,7 @@ namespace sykkelkonken.Service.Persistence
         ICompetitionTeamRepository CompetitionTeams { get; set; }
         IChampionsLeagueTeamRepository ChampionsLeagueTeams { get; set; }
         ILotteryTeamRepository LotteryTeams { get; set; }
+        IYouthTeamRepository YouthTeams { get; set; }
         IResultRepository Results { get; set; }
         IStatsRepository Stats { get; set; }
         ISessionRepository Session { get; set; }

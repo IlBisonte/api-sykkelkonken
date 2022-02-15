@@ -31,23 +31,23 @@ namespace sykkelkonken.Service.Persistence
         public IList<VMCompetitionTeamBikeRiderResults> GetCompetitionTeamBikeRiderResults(int competitionTeamId)
         {
             var res = _context.Database.SqlQuery<VMCompetitionTeamBikeRiderResults>(string.Format(
-                @"SELECT      CompetitionTeamId, Name, BikeRiderId, BikeRiderName, CQPoints, Points, RiderIndex  
+                @"SELECT      CompetitionTeamId, Name, BikeRiderId, BikeRiderDetailId, BikeRiderName, CQPoints, Points, RiderIndex  
                 FROM            dbo.v_CompetitionTeamPointsDetail
                 WHERE CompetitionTeamId = {0}
                 ORDER BY CQPoints DESC", competitionTeamId)).ToList();
             return res;
         }
 
-        public IList<VMBikeRiderResults> GetBikeRiderResults(int bikeRiderId, int year)
+        public IList<VMBikeRiderResults> GetBikeRiderResults(int bikeRiderDetailId, int year)
         {
             var res = _context.Database.SqlQuery<VMBikeRiderResults>(string.Format(
                 @"SELECT       BikeRaceDetailId, BikeRaceId, BikeRaceName, dbo.GetBikeRaceResultText(GCPosition, StagePosition, StageNo, LeaderJerseyName) AS Description, Year,
-				StartDate, BikeRiderId, 
+				StartDate, FinishDate, BikeRiderId, BikeRiderDetailId, 
 				CASE WHEN GCPosition IS NULL AND StagePosition IS NULL THEN LeaderJerseyPosition ELSE (CASE WHEN GCPosition IS NULL THEN StagePosition ELSE GCPosition END) END AS Position, 
 				CASE WHEN GCPoints IS NULL AND StagePoints IS NULL THEN LeaderJerseyPoints ELSE (CASE WHEN GCPoints IS NULL THEN StagePoints ELSE GCPoints END) END AS Points
                 FROM            dbo.v_BikeRaceResults 
-                WHERE BikeRiderId = {0} AND Year = {1}
-                ORDER BY StartDate, GCPosition, LeaderJerseyPosition, StageNo", bikeRiderId, year)).ToList();
+                WHERE BikeRiderDetailId = {0} AND Year = {1}
+                ORDER BY StartDate, GCPosition, LeaderJerseyPosition, StageNo", bikeRiderDetailId, year)).ToList();
             return res;
         }
 
@@ -92,6 +92,47 @@ namespace sykkelkonken.Service.Persistence
             return res;
         }
 
+        public IList<BikeRaceTotalCLTeamResults> GetBikeRaceTotalCLTeamResults(int bikeRaceDetailId)
+        {
+            var res = _context.Database.SqlQuery<BikeRaceTotalCLTeamResults>(string.Format(
+                @"SELECT        ChampionsLeagueTeamId, CompetitionTeamName, BikeRaceDetailId, BikeRaceId, BikeRaceName, TotalPoints, BikeRiders, RANK() OVER(ORDER BY SUM(TotalPoints) DESC) AS Position
+                FROM            v_BikeRaceCompetitionTeamResults_Total_CL
+                WHERE BikeRaceDetailId = {0} 
+                GROUP BY ChampionsLeagueTeamId, CompetitionTeamName, BikeRaceDetailId, BikeRaceId, BikeRaceName, BikeRiders, TotalPoints
+                ", bikeRaceDetailId)).ToList();
+            return res;
+        }
+
+        public IList<BikeRaceGCCLTeamResults> GetBikeRaceGCCLTeamResults(int bikeRaceDetailId)
+        {
+            var res = _context.Database.SqlQuery<BikeRaceGCCLTeamResults>(string.Format(
+                @"SELECT       ChampionsLeagueTeamId, CompetitionTeamName, GCPoints, '(' + BikeRiders + ')' AS BikeRiders, RANK() OVER(ORDER BY GCPoints DESC) AS Position
+                FROM            dbo.v_BikeRaceCompetitionTeamResults_GC_CL
+                WHERE BikeRaceDetailId = {0} AND GCPoints IS NOT NULL
+                ORDER BY GCPoints desc", bikeRaceDetailId)).ToList();
+            return res;
+        }
+
+        public IList<BikeRaceStageCLTeamResults> GetBikeRaceStageCLTeamResults(int bikeRaceDetailId)
+        {
+            var res = _context.Database.SqlQuery<BikeRaceStageCLTeamResults>(string.Format(
+                @"SELECT       ChampionsLeagueTeamId, CompetitionTeamName, BikeRaceId, BikeRaceName, StagePoints, StageNo, '(' + BikeRiders + ')' AS BikeRiders
+                FROM            dbo.v_BikeRaceCompetitionTeamResults_Stage_CL
+                WHERE BikeRaceDetailId = {0} AND StagePoints IS NOT NULL
+                ORDER BY StageNo, StagePoints desc", bikeRaceDetailId)).ToList();
+            return res;
+        }
+
+        public IList<BikeRaceLeaderJerseyCLTeamResults> GetBikeRaceLeaderJerseyCLTeamResults(int bikeRaceDetailId)
+        {
+            var res = _context.Database.SqlQuery<BikeRaceLeaderJerseyCLTeamResults>(string.Format(
+                @"SELECT        ChampionsLeagueTeamId, CompetitionTeamName, BikeRaceId, BikeRaceName, LeaderJerseyPoints, LeaderJerseyName, '(' + BikeRiders + ')' AS BikeRiders
+                FROM            v_BikeRaceCompetitionTeamResults_LeaderJersey_CL
+                WHERE BikeRaceDetailId = {0} AND LeaderJerseyPoints IS NOT NULL
+                ORDER BY LeaderJerseyPoints desc", bikeRaceDetailId)).ToList();
+            return res;
+        }
+
         public IList<VMCompetitionTeamResults> GetCompetitionTeamResults_Monuments(int year)
         {
             var res = _context.Database.SqlQuery<VMCompetitionTeamResults>(string.Format(
@@ -105,20 +146,20 @@ namespace sykkelkonken.Service.Persistence
         public IList<VMCompetitionTeamBikeRiderResults> GetCompetitionTeamBikeRiderResults_Monuments(int competitionTeamId)
         {
             var res = _context.Database.SqlQuery<VMCompetitionTeamBikeRiderResults>(string.Format(
-                @"SELECT      CompetitionTeamId, Name, BikeRiderId, BikeRiderName, CQPoints, Points, RiderIndex  
+                @"SELECT      CompetitionTeamId, Name, BikeRiderId, BikeRiderDetailId, BikeRiderName, CQPoints, Points, RiderIndex  
                 FROM            dbo.v_CompetitionTeamPointsDetail_Monuments
                 WHERE CompetitionTeamId = {0}
                 ORDER BY CQPoints DESC", competitionTeamId)).ToList();
             return res;
         }
 
-        public IList<VMBikeRiderResults> GetBikeRiderResults_Monuments(int bikeRiderId, int year)
+        public IList<VMBikeRiderResults> GetBikeRiderResults_Monuments(int bikeRiderDetailId, int year)
         {
             var res = _context.Database.SqlQuery<VMBikeRiderResults>(string.Format(
                 @"SELECT       BikeRaceId, BikeRaceName, BikeRiderId, GCPosition, GCPoints
                 FROM            dbo.v_BikeRaceResults
-                WHERE BikeRiderId = {0} AND Year = {1} AND BikeRaceCategoryId = 2
-                ORDER BY BikeRaceId, GCPosition, StageNo", bikeRiderId, year)).ToList();
+                WHERE BikeRiderDetailId = {0} AND Year = {1} AND BikeRaceCategoryId = 2
+                ORDER BY BikeRaceId, GCPosition, StageNo", bikeRiderDetailId, year)).ToList();
             return res;
         }
 
@@ -161,6 +202,27 @@ namespace sykkelkonken.Service.Persistence
                 FROM            dbo.v_LotteryTeamPointsDetail
                 WHERE LotteryTeamId = {0}
                 ORDER BY CQPoints DESC", lotteryTeamId)).ToList();
+            return res;
+        }
+
+        public IList<VMCompetitionTeamResults> GetYouthTeamResults(int year)
+        {
+
+            var res = _context.Database.SqlQuery<VMCompetitionTeamResults>(string.Format(
+                @"SELECT     YouthTeamId AS CompetitionTeamId, Name, Year, TotalCQPoints, Note, Points, TeamIndex, RANK() OVER(ORDER BY Points DESC) AS Position
+                FROM            dbo.v_YouthTeamPoints
+                WHERE   Year = {0}
+                ORDER BY Points DESC", year)).ToList();
+            return res;
+        }
+
+        public IList<VMCompetitionTeamBikeRiderResults> GetYouthTeamBikeRiderResults(int youthTeamId)
+        {
+            var res = _context.Database.SqlQuery<VMCompetitionTeamBikeRiderResults>(string.Format(
+                @"SELECT      YouthTeamId AS CompetitionTeamId, Name, BikeRiderId, BikeRiderDetailId, BikeRiderName, CQPoints, Points, RiderIndex  
+                FROM            dbo.v_YouthTeamPointsDetail
+                WHERE YouthTeamId = {0}
+                ORDER BY CQPoints DESC", youthTeamId)).ToList();
             return res;
         }
     }

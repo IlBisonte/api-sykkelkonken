@@ -18,6 +18,7 @@ namespace sykkelkonken.Service.Persistence
         BikeRace GetBikeRace(string name);
         BikeRaceDetail GetBikeRaceDetail(int bikeRaceDetailId);
         BikeRaceDetail GetBikeRaceDetail(int bikeRaceId, int year);
+        BikeRaceDetail GetLastCalculatedBikeRace(int year);
         void AddBikeRace(BikeRace bikeRace);
         int AddBikeRaceSave(BikeRace bikeRace);
         void AddBikeRaceDetail(BikeRaceDetail bikeRaceDetail);
@@ -26,5 +27,8 @@ namespace sykkelkonken.Service.Persistence
         void UpdateBikeRaceResult(int bikeRaceDetailId, int bikeRiderId, int position);
         void UpdateStageResult(int bikeRaceDetailId, int stageNo, int stagePosition, int bikeRiderId);
         void UpdateLeaderJerseyResult(int bikeRaceDetailId, int bikeRiderId, int position, int leaderJerseyId);
+        IList<BikeRaceSeasonPlacement> GetBikeRaceSeasonPlacements(int year);
+        void AddBikeRaceSeasonPlacement(BikeRaceSeasonPlacement bikeRaceSeasonPlacement);
+        void RemoveBikeRaceSeasonPlacement(BikeRaceSeasonPlacement bikeRaceSeasonPlacement);
     }
 }

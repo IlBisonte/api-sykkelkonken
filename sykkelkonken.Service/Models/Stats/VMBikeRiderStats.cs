@@ -8,6 +8,7 @@ namespace sykkelkonken.Service.Models
     public class VMBikeRiderStats
     {
         public int BikeRiderId { get; set; }
+        public int BikeRiderDetailId { get; set; }
         public string BikeRiderName { get; set; }
         public string BikeTeamCode { get; set; }
         public int? Points { get; set; }

@@ -5,19 +5,15 @@ using System.Web;
 
 namespace sykkelkonken.Service.Models
 {
-    //results of bikeriders to the selected team
-    public class VMCompetitionTeamBikeRiderResults
+    public class VMBikeRiderScoreAllTime
     {
-        public int CompetitionTeamId { get; set; }
-        public string Name { get; set; }
         public int BikeRiderId { get; set; }
-        public int BikeRiderDetailId { get; set; }
+
         public string BikeRiderName { get; set; }
-        public int CQPoints { get; set; }
+
         public int Points { get; set; }
+
         public double RiderIndex { get; set; }
-
-
 
         public string RiderIndexTwoDecimals
         {
@@ -29,6 +25,6 @@ namespace sykkelkonken.Service.Models
                 }
                 return "";
             }
-        } 
+        }
     }
 }

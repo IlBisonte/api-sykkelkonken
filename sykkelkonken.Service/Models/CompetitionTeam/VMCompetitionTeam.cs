@@ -29,7 +29,7 @@ namespace sykkelkonken.Service.Models
             {
                 BikeRiderId = ctbr.BikeRiderId,
                 BikeRiderName = ctbr.BikeRider.BikeRiderName,
-                CQPoints = ctbr.BikeRider.CQPoints,
+                CQPoints = ctbr.BikeRider.CQPoints ?? 0,
                 BikeTeamCode = ctbr.BikeRider.BikeTeamCode,
                 Nationality = ctbr.BikeRider.Nationality,
             }).ToList();
@@ -49,7 +49,7 @@ namespace sykkelkonken.Service.Models
                 this.TotalCQPoints = championsLeagueTeam.ChampionsLeagueTeamBikeRiders.Sum(br => br.BikeRiderDetail.CQPoints);
             }
             this.Note = championsLeagueTeam.Note;
-            
+
         }
 
         #region GET
@@ -70,5 +70,27 @@ namespace sykkelkonken.Service.Models
         }
 
         #endregion
+    }
+
+    public class VMViewCompetitionTeam
+    {
+        public int CompetitionTeamId { get; set; }
+        public string Name { get; set; }
+        public int TotalCQPoints { get; set; }
+
+        public int BikeRiderDetailId { get; set; }
+
+        public int BikeRiderId { get; set; }
+
+        public string BikeRiderName { get; set; }
+
+        public string BikeTeamCode { get; set; }
+
+        public string Nationality { get; set; }
+
+        public int CQPoints { get; set; }
+
+        public int Year { get; set; }
+
     }
 }

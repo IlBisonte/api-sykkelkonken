@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Web;
 using sykkelkonken.Data;
+using sykkelkonken.Service.Models;
 
 namespace sykkelkonken.Service.Persistence
 {
@@ -20,7 +21,7 @@ namespace sykkelkonken.Service.Persistence
         {
             this._context.Database.ExecuteSqlCommand("truncate table dbo.BikeRider");
         }
-        
+
         public void AddBikeRidersInBulk(System.Data.DataTable dtBikeRiders, string connectionstring)
         {
             using (System.Data.SqlClient.SqlBulkCopy s = new System.Data.SqlClient.SqlBulkCopy(connectionstring))
@@ -83,6 +84,31 @@ namespace sykkelkonken.Service.Persistence
             return _context.BikeRiders.Where(br => br.BikeRiderName.ToLower().Contains(searchtext.ToLower()) || br.BikeTeamName.ToLower().Contains(searchtext.ToLower()) || br.BikeTeamCode.ToLower().Contains(searchtext.ToLower()) || br.Nationality.ToLower().Contains(searchtext.ToLower())).ToList();
         }
 
+        public IEnumerable<Models.VMBikeRider> GetBySearchText(string searchtext, int year)
+        {
+
+            var res = _context.Database.SqlQuery<Models.VMBikeRider>(string.Format(
+
+                @"select br.BikeRiderId, br.BikeRiderName, br.Nationality, det.Year, det.CQPoints, det.BikeTeamCode
+                    from BikeRider br
+                    inner join BikeRiderDetail det on det.BikeRiderId = br.BikeRiderId
+                    where det.Year = {0} and (br.BikeRiderName like '%{1}%' or br.Nationality like '%{1}%' or det.BikeTeamCode like '%{1}%' or det.BikeTeamName like '%{1}%')
+                ORDER BY det.CQPoints DESC", year, searchtext)).ToList();
+            return res;
+        }
+
+        public IEnumerable<VMBikeRider> GetBySearchTextYouth(string searchtext, int year)
+        {
+            var youthLimitYear = year - 25;
+            var res = _context.Database.SqlQuery<Models.VMBikeRider>(string.Format(
+                @"select br.BikeRiderId, br.BikeRiderName, br.Nationality, det.Year, det.CQPoints, det.BikeTeamCode
+                    from BikeRider br
+                    inner join BikeRiderDetail det on det.BikeRiderId = br.BikeRiderId
+                    where br.BirthDate is not null AND br.BirthDate >= '{2}' AND det.Year = {0} and (br.BikeRiderName like '%{1}%' or br.Nationality like '%{1}%' or det.BikeTeamCode like '%{1}%' or det.BikeTeamName like '%{1}%')
+                ORDER BY det.CQPoints DESC", year, searchtext, string.Format("{0}0101", youthLimitYear))).ToList();
+            return res;
+        }
+
         public void AddBikeRider(BikeRider bikeRider)
         {
             _context.BikeRiders.Add(bikeRider);
@@ -113,6 +139,16 @@ namespace sykkelkonken.Service.Persistence
         public BikeRiderDetail GetBikeRiderDetailByName(string name, int year)
         {
             return this._context.BikeRiderDetails.FirstOrDefault(br => br.BikeRider.BikeRiderName == name && br.Year == year);
+        }
+
+        public BikeRiderDetail GetBikeRiderDetailByMainLastName(string mainlastname, int year)//søker f.eks etter kun valgren og ikke valgren hundahl (andersen)
+        {
+            return this._context.BikeRiderDetails.FirstOrDefault(br => br.BikeRider.BikeRiderName.Contains(mainlastname) && br.Year == year);
+        }
+
+        public BikeRiderDetail GetBikeRiderDetail(int bikeRiderDetailId)
+        {
+            return this._context.BikeRiderDetails.FirstOrDefault(br => br.BikeRiderDetailId == bikeRiderDetailId);
         }
     }
 }

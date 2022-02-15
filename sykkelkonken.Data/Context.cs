@@ -17,6 +17,7 @@ namespace sykkelkonken.Data
         public DbSet<BikeRaceCategory> BikeRaceCategories { get; set; }
         public DbSet<BikeRaceCategoryPoints> BikeRaceCategoryPointss { get; set; }
         public DbSet<BikeRaceResult> BikeRaceResults { get; set; }
+        public DbSet<BikeRaceSeasonPlacement> BikeRaceSeasonPlacements { get; set; }
         public DbSet<BikeRider> BikeRiders { get; set; }
         public DbSet<BikeRiderDetail> BikeRiderDetails { get; set; }
         public DbSet<BikeRiderResult> BikeRiderResults { get; set; }
@@ -31,6 +32,8 @@ namespace sykkelkonken.Data
         public DbSet<LeaderJerseyResult> LeaderJerseyResults { get; set; }
         public DbSet<LotteryTeam> LotteryTeams { get; set; }
         public DbSet<LotteryTeamBikeRider> LotteryTeamBikeRiders { get; set; }
+        public DbSet<YouthTeam> YouthTeams { get; set; }
+        public DbSet<YouthTeamBikeRider> YouthTeamBikeRiders { get; set; }
 
         public Context()
             : base("name=Context")
@@ -50,6 +53,7 @@ namespace sykkelkonken.Data
             modelBuilder.Entity<BikeRaceCategory>().ToTable("BikeRaceCategory");
             modelBuilder.Entity<BikeRaceCategoryPoints>().ToTable("BikeRaceCategoryPoints");
             modelBuilder.Entity<BikeRaceResult>().ToTable("BikeRaceResult");
+            modelBuilder.Entity<BikeRaceSeasonPlacement>().ToTable("BikeRaceSeasonPlacement");
             modelBuilder.Entity<BikeRider>().ToTable("BikeRider");
             modelBuilder.Entity<BikeRiderDetail>().ToTable("BikeRiderDetail");
             modelBuilder.Entity<BikeRiderResult>().ToTable("BikeRiderResult");
@@ -64,6 +68,8 @@ namespace sykkelkonken.Data
             modelBuilder.Entity<LeaderJerseyResult>().ToTable("LeaderJerseyResult");
             modelBuilder.Entity<LotteryTeam>().ToTable("LotteryTeam");
             modelBuilder.Entity<LotteryTeamBikeRider>().ToTable("LotteryTeamBikeRider");
+            modelBuilder.Entity<YouthTeam>().ToTable("YouthTeam");
+            modelBuilder.Entity<YouthTeamBikeRider>().ToTable("YouthTeamBikeRider");
         }
 
         #endregion
