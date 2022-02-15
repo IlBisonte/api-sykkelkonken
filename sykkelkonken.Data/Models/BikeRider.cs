@@ -22,10 +22,12 @@ namespace sykkelkonken.Data
 
         public string Nationality { get; set; }
 
-        public int CQPoints { get; set; }
+        public int? CQPoints { get; set; }
+
+        public DateTime? BirthDate { get; set; }
 
         #region Navigation
-        
+
         public virtual ICollection<BikeRaceResult> BikeRaceResults { get; set; }
 
         #endregion

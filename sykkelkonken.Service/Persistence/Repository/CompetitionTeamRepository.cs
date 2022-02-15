@@ -44,6 +44,22 @@ namespace sykkelkonken.Service.Persistence
             return this._context.CompetitionTeams.Where(ct => ct.Year == year).ToList();
         }
 
+        public IList<Models.VMViewCompetitionTeam> GetCompetitionTeamsFromView(int year)
+        {
+
+            var res = _context.Database.SqlQuery<Models.VMViewCompetitionTeam>(string.Format(
+                @"SELECT       *
+                FROM            v_CompetitionTeamBikeRider
+                WHERE Year = {0}", year)).ToList();
+            return res;
+            //return this._context.CompetitionTeams.Where(ct => ct.Year == year).ToList();
+        }
+
+        public CompetitionTeam GetByCompetitionTeamId(int competitionTeamId)
+        {
+            return this._context.CompetitionTeams.Where(ct => ct.CompetitionTeamId == competitionTeamId).SingleOrDefault();
+        }
+
         public void RemoveCompetitionTeams()
         {
             this._context.Database.ExecuteSqlCommand("truncate table dbo.CompetitionTeamBikeRider");

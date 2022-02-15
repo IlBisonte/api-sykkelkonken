@@ -29,6 +29,13 @@ namespace sykkelkonken.Data
 
         public bool? IsCalculated { get; set; }
 
+        public string Name { get; set; }//race may change name from year to year
+
+        public string BikeRaceNameShort { get; set; }
+
+        public bool? Cancelled { get; set; }
+        public string CountryName { get; set; }//race may change name from year to year
+
 
         #region Navigation
 

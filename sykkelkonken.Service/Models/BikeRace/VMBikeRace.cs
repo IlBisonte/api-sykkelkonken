@@ -12,7 +12,7 @@ namespace sykkelkonken.Service.Models
         public int BikeRaceDetailId { get; set; }
 
         public int BikeRaceId { get; set; }
-        
+
         public string Name { get; set; }
 
         public int Year { get; set; }
@@ -31,24 +31,38 @@ namespace sykkelkonken.Service.Models
 
         public bool IsCalculated { get; set; }
 
+        public string BikeRiderWinner { get; set; }
+
+        public bool Cancelled { get; set; }
+
         public VMBikeRaceDetail()
         {
 
         }
-        
+
         public VMBikeRaceDetail(sykkelkonken.Data.BikeRaceDetail bikeRace)
         {
             this.BikeRaceDetailId = bikeRace.BikeRaceDetailId;
             this.BikeRaceId = bikeRace.BikeRaceId;
-            this.Name = bikeRace.BikeRace.Name;
+            this.Name = bikeRace.Name;
             this.Year = bikeRace.Year;
             this.StartDate = bikeRace.StartDate ?? new DateTime();
             this.FinishDate = bikeRace.FinishDate ?? new DateTime();
-            this.CountryName = bikeRace.BikeRace.CountryName;
+            this.CountryName = bikeRace.CountryName;
             this.BikeRaceCategoryId = bikeRace.BikeRaceCategoryId ?? -1;
             this.NoOfStages = bikeRace.NoOfStages ?? 0;
             this.HasTTT = bikeRace.HasTTT ?? false;
             this.IsCalculated = bikeRace.IsCalculated ?? false;
+            this.BikeRiderWinner = "";
+            this.Cancelled = bikeRace.Cancelled ?? false;
+            if (bikeRace.BikeRaceResults.Count > 0)
+            {
+                var winner = bikeRace.BikeRaceResults.FirstOrDefault(r => r.Position == 1);
+                if (winner != null)
+                {
+                    this.BikeRiderWinner = winner.BikeRider.BikeRiderName;
+                }
+            }
 
             if (!this.IsCalculated)
             {
@@ -109,11 +123,26 @@ namespace sykkelkonken.Service.Models
             }
         }
 
+        public string StartDateToddMMM
+        {
+            get
+            {
+                return this.StartDate.ToString("dd MMM");
+            }
+        }
         public string StartDateToddMMyyyy
         {
             get
             {
                 return this.StartDate.ToString("dd.MM.yyyy");
+            }
+        }
+
+        public string FinishDateToddMMM
+        {
+            get
+            {
+                return this.FinishDate.ToString("dd MMM");
             }
         }
 

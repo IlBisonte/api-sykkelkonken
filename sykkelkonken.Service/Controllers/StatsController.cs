@@ -23,5 +23,18 @@ namespace sykkelkonken.Service.Controllers
         {
             return _unitOfWork.Stats.GetBikeRiderStats(year).ToList();
         }
+
+        [HttpGet]
+        public IList<VMBikeRiderScoreAllTime> GetBikeRiderScoreAllTime()
+        {
+            return _unitOfWork.Stats.GetBikeRiderScoreAllTime().OrderByDescending(s => s.Points).ToList();
+        }
+
+        [HttpGet]
+        public IList<string> GetCompTeamsWithSelectedBikeRider(int bikeRiderDetailId)
+        {
+            var compTeams = _unitOfWork.Stats.GetCompTeamsWithSelectedBikeRider(bikeRiderDetailId).ToList();
+            return compTeams;
+        }
     }
 }

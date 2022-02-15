@@ -10,6 +10,8 @@ namespace sykkelkonken.Service.Persistence
     public interface ICompetitionTeamRepository
     {
         IList<CompetitionTeam> Get(int year);
+        IList<Models.VMViewCompetitionTeam> GetCompetitionTeamsFromView(int year);
+        CompetitionTeam GetByCompetitionTeamId(int competitionTeamId);
         int AddCompetitionTeam(CompetitionTeam competitionTeam);//Add CompetitionTeam and return new CompetitionTeamId
         void AddBikeRiderToCompetitionTeam(int competitionTeamId, int bikeRiderId);
         void RemoveCompetitionTeams();

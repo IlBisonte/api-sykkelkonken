@@ -74,6 +74,11 @@ namespace sykkelkonken.Service.Persistence
             return this._context.BikeRaceDetails.SingleOrDefault(br => br.BikeRaceId == bikeRaceId && br.Year == year);
         }
 
+        public BikeRaceDetail GetLastCalculatedBikeRace(int year)
+        {
+            return this._context.BikeRaceDetails.Where(br => br.IsCalculated == true && br.Year == year).OrderByDescending(br => br.FinishDate).ThenByDescending(br => br.StartDate).FirstOrDefault();
+        }
+
         public void UpdateBikeRaceResult(int bikeRaceDetailId, int bikeRiderId, int position)
         {
             var bikeRaceResult = this._context.BikeRaceResults.SingleOrDefault(brr => brr.BikeRaceDetailId == bikeRaceDetailId && brr.Position == position);
@@ -208,6 +213,21 @@ namespace sykkelkonken.Service.Persistence
                 _context.LeaderJerseyResults.RemoveRange(bikeRaceDetail.LeaderJerseyResults);
             }
             _context.BikeRaceDetails.Remove(bikeRaceDetail);
+        }
+
+        public IList<BikeRaceSeasonPlacement> GetBikeRaceSeasonPlacements(int year)
+        {
+            return this._context.BikeRaceSeasonPlacements.Where(br => br.Year == year).ToList();
+        }
+
+        public void AddBikeRaceSeasonPlacement(BikeRaceSeasonPlacement bikeRaceSeasonPlacement)
+        {
+            this._context.BikeRaceSeasonPlacements.Add(bikeRaceSeasonPlacement);
+        }
+
+        public void RemoveBikeRaceSeasonPlacement(BikeRaceSeasonPlacement bikeRaceSeasonPlacement)
+        {
+            this._context.BikeRaceSeasonPlacements.Remove(bikeRaceSeasonPlacement);
         }
     }
 }

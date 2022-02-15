@@ -16,5 +16,18 @@ namespace sykkelkonken.Service.Models
         public int Points { get; set; }
         public double TeamIndex { get; set; }
         public string Color { get; set; }
+        public int PreviousRank { get; set; }
+
+        public long RankingTrend //ranking gained or lost since last bikerace
+        {
+            get
+            {
+                if (Position == 0)
+                {
+                    return 0;
+                }
+                return PreviousRank - Position;
+            }
+        }
     }
 }

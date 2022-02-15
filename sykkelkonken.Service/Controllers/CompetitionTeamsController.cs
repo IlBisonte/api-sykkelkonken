@@ -27,12 +27,39 @@ namespace sykkelkonken.Service.Controllers
         [JwtAuthentication]
         public IList<VMCompetitionTeam> Get(int year)
         {
-            return _unitOfWork.CompetitionTeams.Get(year).Select(ct => new VMCompetitionTeam(ct)).ToList();
+            List<VMViewCompetitionTeam> lstCompTeams = _unitOfWork.CompetitionTeams.GetCompetitionTeamsFromView(year).ToList();
+
+            List<VMCompetitionTeam> lstCompetitionTeamsToReturn = new List<VMCompetitionTeam>();
+            foreach (var compTeam in lstCompTeams.GroupBy(ct => ct.CompetitionTeamId))
+            {
+                VMCompetitionTeam vmCompetitionTeam = new VMCompetitionTeam()
+                {
+                    CompetitionTeamId = compTeam.Key,
+                    TeamName = compTeam.Select(ct => ct.Name).FirstOrDefault(),
+                    TotalCQPoints = compTeam.Sum(ct => ct.CQPoints),
+                };
+                foreach (var bikeRider in compTeam)
+                {
+                    vmCompetitionTeam.BikeRiders.Add(new VMBikeRider()
+                    {
+                        BikeRiderId = bikeRider.BikeRiderId,
+                        BikeRiderDetailId = bikeRider.BikeRiderDetailId,
+                        BikeRiderName = bikeRider.BikeRiderName,
+                        BikeTeamCode = bikeRider.BikeTeamCode,
+                        Nationality = bikeRider.Nationality,
+                        CQPoints = bikeRider.CQPoints,
+                        Year = bikeRider.Year,
+                    });
+                }
+                lstCompetitionTeamsToReturn.Add(vmCompetitionTeam);
+            }
+
+            return lstCompetitionTeamsToReturn;
         }
 
         [JwtAuthentication]
         [AcceptVerbs("GET", "POST")]
-        public HttpResponseMessage ImportCompetitionTeams(int year)
+        public HttpResponseMessage ImportCompetitionTeams(int year)//forventer rytterne avkrysset for hvert lag i excel
         {
             HttpResponseMessage result = null;
 
@@ -149,18 +176,227 @@ namespace sykkelkonken.Service.Controllers
                                     }
                                 }
                                 competitionTeam.TotalCQPoints = totalCqPoints;
-                                int competitionTeamId = this._unitOfWork.CompetitionTeams.AddCompetitionTeam(competitionTeam);
-                                if (competitionTeamId > 0)
-                                {
-                                    competitionTeam.CompetitionTeamId = competitionTeamId;
-                                        
-                                }
+                                //int competitionTeamId = this._unitOfWork.CompetitionTeams.AddCompetitionTeam(competitionTeam);
+                                //if (competitionTeamId > 0)
+                                //{
+                                //    competitionTeam.CompetitionTeamId = competitionTeamId;
+
+                                //}
                             }
                             foreach (var competitionTeam in competitionTeams)
                             {
                                 foreach (var bikeRider in competitionTeam.CompetitionTeamBikeRiders)
                                 {
+                                    //this._unitOfWork.CompetitionTeams.AddBikeRiderToCompetitionTeam(competitionTeam.CompetitionTeamId, bikeRider.BikeRiderId);
+                                }
+                            }
+                            //_unitOfWork.Complete();
+                        }
+                    }
+
+                    result = Request.CreateResponse(HttpStatusCode.Created);
+                }
+                else
+                {
+                    result = Request.CreateResponse(HttpStatusCode.BadRequest);
+                }
+            }
+            catch (Exception ex)
+            {
+                string sFeilmelding = "";
+                do
+                {
+                    sFeilmelding += string.Format("- {0}", ex.Message);
+                    ex = ex.InnerException;
+                } while (ex != null);
+                result = Request.CreateResponse(HttpStatusCode.BadRequest, sFeilmelding);
+            }
+            finally
+            {
+                //if (scope != null)
+                //{
+                //    scope.Dispose();
+                //}
+            }
+
+            return result;
+        }
+
+        [JwtAuthentication]
+        [AcceptVerbs("GET", "POST")]
+        public HttpResponseMessage ImportCompetitionTeamsList(int year)//forventer lagene nedover i excel-liste
+        {
+            HttpResponseMessage result = null;
+
+            TransactionScope scope = null;
+            var httpRequest = HttpContext.Current.Request;
+
+            try
+            {
+                if (httpRequest.Files.Count > 0)
+                {
+                    foreach (string file in httpRequest.Files)
+                    {
+
+                        var postedFile = httpRequest.Files[file];
+                        var filePath = HttpContext.Current.Server.MapPath("~/" + postedFile.FileName);
+
+                        using (var excel = new OfficeOpenXml.ExcelPackage(postedFile.InputStream))
+                        {
+                            IList<Data.CompetitionTeam> competitionTeams = new List<Data.CompetitionTeam>();
+                            var tbl = new DataTable();
+                            //var ws = excel.Workbook.Worksheets["Year Ranking"];
+                            var ws = excel.Workbook.Worksheets.First();
+                            var hasHeader = true;  // adjust accordingly
+
+                            // add DataColumns to DataTable
+                            //foreach (var firstRowCell in ws.Cells[1, 1, 1, ws.Dimension.End.Column])
+                            //{
+                            //    tbl.Columns.Add(hasHeader ? firstRowCell.Text
+                            //        : String.Format("Column {0}", firstRowCell.Start.Column));
+                            //}
+
+                            int startRow = 1;
+                            int iTeamIdx = 0;
+                            int iRowIdx = 1;
+                            CompetitionTeam compTeam = new CompetitionTeam();
+                            for (int rowNum = startRow; rowNum <= ws.Dimension.End.Row; rowNum++)
+                            {
+                                if (ws.Cells[rowNum, 1].Text.Trim().Length == 0)
+                                {
+                                    continue;
+                                }
+                                var wsRow = ws.Cells[rowNum, 1, rowNum, ws.Dimension.End.Column];
+                                bool isTeamName = false;
+                                string col2 = ws.Cells[rowNum, 2].Text;
+                                if (col2.Trim().Length == 0)
+                                {
+                                    isTeamName = true;
+                                }
+                                else
+                                {
+                                    int sum = 0;
+                                    Int32.TryParse(col2.Trim(), out sum);
+                                    if (sum < 30)
+                                    {
+                                        isTeamName = true;
+                                    }
+                                }
+                                if (isTeamName)
+                                {
+                                    iTeamIdx++;
+                                    string teamName = ws.Cells[rowNum, 1].Text.Substring(ws.Cells[rowNum, 1].Text.IndexOf(":") + 1).Trim();
+                                    compTeam = new CompetitionTeam()
+                                    {
+                                        CompetitionTeamId = iTeamIdx,
+                                        Name = teamName,
+                                        Year = year,
+                                        CompetitionTeamBikeRiders = new List<CompetitionTeamBikeRider>(),
+                                    };
+                                    competitionTeams.Add(compTeam);
+                                }
+                                else
+                                {
+                                    string bikeRiderName = ws.Cells[rowNum, 1].Text;
+                                    if (bikeRiderName.Trim().Length == 0)
+                                    {
+                                        continue;
+                                    }
+                                    Data.BikeRiderDetail bikeRider = _unitOfWork.BikeRiders.GetBikeRiderDetailByName(bikeRiderName, year);
+                                    if (bikeRider != null)
+                                    {
+                                        compTeam.CompetitionTeamBikeRiders.Add(new CompetitionTeamBikeRider()
+                                        {
+                                            CompetitionTeamId = compTeam.CompetitionTeamId,
+                                            BikeRider = bikeRider.BikeRider,
+                                            BikeRiderId = bikeRider.BikeRiderId,
+                                        });
+                                    }
+                                    else
+                                    {
+                                        string mainLastName = bikeRiderName.Substring(0, bikeRiderName.IndexOf(" "));//finner hovedetternavn. antar at det er første navn før mellomrom. hva skal gjøres med nederlandske navn?
+                                        Data.BikeRiderDetail bikeRiderLike = _unitOfWork.BikeRiders.GetBikeRiderDetailByMainLastName(mainLastName, year);
+                                        if (bikeRiderLike != null)
+                                        {
+                                            compTeam.CompetitionTeamBikeRiders.Add(new CompetitionTeamBikeRider()
+                                            {
+                                                CompetitionTeamId = compTeam.CompetitionTeamId,
+                                                BikeRider = bikeRiderLike.BikeRider,
+                                                BikeRiderId = bikeRiderLike.BikeRiderId,
+                                            });
+                                        }
+                                    }
+                                }
+
+                                iRowIdx++;
+                            }
+
+                            var msg = String.Format("DataTable successfully created from excel-file. Colum-count:{0} Row-count:{1}",
+                                                    tbl.Columns.Count, tbl.Rows.Count);
+
+                            string sSqlConnStr = System.Configuration.ConfigurationManager.ConnectionStrings["Context"].ConnectionString;
+
+                            foreach (var competitionTeam in competitionTeams)
+                            {
+                                int totalCqPoints = 0;
+                                foreach (var rider in competitionTeam.CompetitionTeamBikeRiders)
+                                {
+                                    var bikeRiderDetail = _unitOfWork.BikeRiders.GetBikeRiderDetailByYear(rider.BikeRiderId, year);
+                                    if (bikeRiderDetail != null)
+                                    {
+                                        totalCqPoints += bikeRiderDetail.CQPoints;
+                                    }
+                                }
+                                competitionTeam.TotalCQPoints = totalCqPoints;
+                                int competitionTeamId = this._unitOfWork.CompetitionTeams.AddCompetitionTeam(competitionTeam);
+                                if (competitionTeamId > 0)
+                                {
+                                    competitionTeam.CompetitionTeamId = competitionTeamId;
+
+                                }
+                            }
+
+                            var youthLimitYear = year - 25;
+                            DateTime dtYouthLimit = new DateTime(youthLimitYear, 1, 1);
+                            foreach (var competitionTeam in competitionTeams)
+                            {
+                                int youthTeamId = -1;
+                                bool bIsYouthTeam = true;
+                                foreach (var bikeRider in competitionTeam.CompetitionTeamBikeRiders)
+                                {
+                                    if (bIsYouthTeam)
+                                    {
+                                        var br = _unitOfWork.BikeRiders.Get(bikeRider.BikeRiderId);
+                                        if (br != null)
+                                        {
+                                            if (br.BirthDate < dtYouthLimit)
+                                            {
+                                                bIsYouthTeam = false;
+                                            }
+                                        }
+                                    }
+                                }
+                                if (bIsYouthTeam)
+                                {
+                                    youthTeamId = _unitOfWork.YouthTeams.AddYouthTeam(new YouthTeam()
+                                    {
+                                        Name = competitionTeam.Name,
+                                        Year = competitionTeam.Year
+                                    });
+                                }
+                                foreach (var bikeRider in competitionTeam.CompetitionTeamBikeRiders)
+                                {
                                     this._unitOfWork.CompetitionTeams.AddBikeRiderToCompetitionTeam(competitionTeam.CompetitionTeamId, bikeRider.BikeRiderId);
+                                    if (bIsYouthTeam)
+                                    {
+                                        BikeRiderDetail bikeRiderDetail = _unitOfWork.BikeRiders.GetBikeRiderDetailByYear(bikeRider.BikeRiderId, year);
+                                        if (bikeRiderDetail != null)
+                                        {
+                                            _unitOfWork.YouthTeams.AddBikeRiderToYouthTeam(youthTeamId, bikeRiderDetail.BikeRiderDetailId);
+                                            _unitOfWork.Complete();
+                                            UpdateYouthTeamTotalCQ(youthTeamId);
+                                        }
+                                    }
                                 }
                             }
                             _unitOfWork.Complete();
@@ -561,6 +797,166 @@ namespace sykkelkonken.Service.Controllers
             var lotteryTeam = _unitOfWork.LotteryTeams.GetById(lotteryTeamId);
             int cqPoints = lotteryTeam.LotteryTeamBikeRiders.Sum(br => br.BikeRiderDetail != null ? br.BikeRiderDetail.CQPoints : 0);
             lotteryTeam.TotalCQPoints = cqPoints;
+            _unitOfWork.Complete();
+            return cqPoints;
+        }
+
+
+        /* Youth Teams */
+
+        [JwtAuthentication]
+        [HttpGet]
+        public IList<VMYouthTeam> GetYouthTeams(int year)
+        {
+            IList<VMYouthTeam> lstYouthTeams = new List<VMYouthTeam>();
+            var youthTeams = _unitOfWork.YouthTeams.Get(year);
+            foreach (var youthTeam in youthTeams)
+            {
+                if (youthTeam.TotalCQPoints == 0)
+                {
+                    youthTeam.TotalCQPoints = youthTeam.YouthTeamBikeRiders.Sum(cl => cl.BikeRiderDetail.CQPoints);
+                    _unitOfWork.Complete();
+                }
+                lstYouthTeams.Add(new VMYouthTeam(youthTeam));
+            }
+            return lstYouthTeams;
+        }
+
+        [JwtAuthentication]
+        [HttpPost]
+        public int InsertYouthTeam(VMYouthTeam youthTeam)
+        {
+            int competitionTeamId = -1;
+            try
+            {
+                competitionTeamId = _unitOfWork.YouthTeams.AddYouthTeam(new YouthTeam()
+                {
+                    Name = youthTeam.Name,
+                    Year = youthTeam.Year
+                });
+                _unitOfWork.Complete();
+            }
+            catch (Exception ex)
+            {
+            }
+            return competitionTeamId;
+        }
+
+        [JwtAuthentication]
+        [HttpPut]
+        public bool UpdateYouthTeam(VMYouthTeam youthTeam)
+        {
+            bool bUpdateOk = true;
+            try
+            {
+                _unitOfWork.YouthTeams.UpdateYouthTeam(youthTeam.YouthTeamId, youthTeam.Name);
+                _unitOfWork.Complete();
+            }
+            catch (Exception ex)
+            {
+                bUpdateOk = false;
+            }
+            return bUpdateOk;
+        }
+
+        [JwtAuthentication]
+        [HttpDelete]
+        public bool RemoveYouthTeam(int youthTeamId)
+        {
+            bool bRemoveOk = true;
+            try
+            {
+                _unitOfWork.YouthTeams.RemoveYouthTeam(youthTeamId);
+                _unitOfWork.Complete();
+            }
+            catch (Exception ex)
+            {
+                bRemoveOk = false;
+            }
+            return bRemoveOk;
+        }
+
+        [HttpGet]
+        public IList<VMBikeRider> GetRidersYouthTeam(int youthTeamId)
+        {
+            return _unitOfWork.YouthTeams.GetBikeRidersYouthTeam(youthTeamId).Select(ct => new VMBikeRider()
+            {
+                BikeRiderDetailId = ct.BikeRiderDetailId,
+                BikeRiderId = ct.BikeRiderDetail.BikeRiderId,
+                BikeRiderName = ct.BikeRiderDetail.BikeRider.BikeRiderName,
+                BikeTeamCode = ct.BikeRiderDetail.BikeTeamCode,
+                BikeTeamName = ct.BikeRiderDetail.BikeTeamName,
+                CQPoints = ct.BikeRiderDetail.CQPoints,
+                Nationality = ct.BikeRiderDetail.BikeRider.Nationality,
+                Year = ct.BikeRiderDetail.Year
+            }).OrderByDescending(ct => ct.CQPoints).ToList();
+        }
+
+        [JwtAuthentication]
+        [HttpPost]
+        public int InsertBikeRiderYouthTeam(VMYouthTeamBikeRider youthTeamRider)
+        {
+            int competitionTeamId = -1;
+            try
+            {
+                BikeRiderDetail bikeRiderDetail = _unitOfWork.BikeRiders.GetBikeRiderDetailByYear(youthTeamRider.BikeRiderId, youthTeamRider.Year);
+                if (bikeRiderDetail != null)
+                {
+                    _unitOfWork.YouthTeams.AddBikeRiderToYouthTeam(youthTeamRider.YouthTeamId, bikeRiderDetail.BikeRiderDetailId);
+                    _unitOfWork.Complete();
+                    UpdateYouthTeamTotalCQ(youthTeamRider.YouthTeamId);
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+            return competitionTeamId;
+        }
+
+        [JwtAuthentication]
+        [HttpPut]
+        public bool UpdateBikeRiderYouthTeam(VMUpdateYouthTeamBikeRider youthTeamRider)
+        {
+            bool bUpdateOk = true;
+            try
+            {
+                BikeRiderDetail bikeRiderDetailOrig = _unitOfWork.BikeRiders.GetBikeRiderDetailByYear(youthTeamRider.OrigBikeRiderId, youthTeamRider.Year);
+                BikeRiderDetail bikeRiderDetailNew = _unitOfWork.BikeRiders.GetBikeRiderDetailByYear(youthTeamRider.NewBikeRiderId, youthTeamRider.Year);
+                _unitOfWork.YouthTeams.UpdateRiderYouthTeam(youthTeamRider.YouthTeamId, bikeRiderDetailOrig.BikeRiderDetailId, bikeRiderDetailNew.BikeRiderDetailId);
+                _unitOfWork.Complete();
+                UpdateYouthTeamTotalCQ(youthTeamRider.YouthTeamId);
+            }
+            catch (Exception ex)
+            {
+                bUpdateOk = false;
+            }
+            return bUpdateOk;
+        }
+
+        [JwtAuthentication]
+        [HttpPut]
+        public bool RemoveBikeRiderYouthTeam(VMYouthTeamBikeRider youthTeamRider)
+        {
+            bool bRemoveOk = true;
+            try
+            {
+                BikeRiderDetail bikeRiderDetail = _unitOfWork.BikeRiders.GetBikeRiderDetailByYear(youthTeamRider.BikeRiderId, youthTeamRider.Year);
+                _unitOfWork.YouthTeams.RemoveRiderYouthTeam(youthTeamRider.YouthTeamId, bikeRiderDetail.BikeRiderDetailId);
+                _unitOfWork.Complete();
+                UpdateYouthTeamTotalCQ(youthTeamRider.YouthTeamId);
+            }
+            catch (Exception ex)
+            {
+                bRemoveOk = false;
+            }
+            return bRemoveOk;
+        }
+
+        private int UpdateYouthTeamTotalCQ(int youthTeamId)
+        {
+            var youthTeam = _unitOfWork.YouthTeams.GetById(youthTeamId);
+            int cqPoints = youthTeam.YouthTeamBikeRiders.Sum(br => br.BikeRiderDetail != null ? br.BikeRiderDetail.CQPoints : 0);
+            youthTeam.TotalCQPoints = cqPoints;
             _unitOfWork.Complete();
             return cqPoints;
         }

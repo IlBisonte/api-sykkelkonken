@@ -21,14 +21,17 @@ namespace sykkelkonken.Service.Controllers
             _unitOfWork = new UnitOfWork();
         }
 
-        [JwtAuthentication]
         [HttpGet]
-        public IList<VMBikeRaceDetail> Get(int year)
+        public IList<VMBikeRaceDetail> Get(int year, bool showCancelled)
         {
             IList<VMBikeRaceDetail> lstVMBikeRaces = new List<VMBikeRaceDetail>();
             var bikeRaces = _unitOfWork.BikeRaces.GetBikeRaceDetails(year).ToList();
             foreach (var bikeRace in bikeRaces)
             {
+                if ((bikeRace.Cancelled ?? false) && !showCancelled)
+                {
+                    continue;
+                }
                 VMBikeRaceDetail vmBikeRace = new VMBikeRaceDetail(bikeRace);
                 if (vmBikeRace.IsCalculated)
                 {
@@ -62,21 +65,28 @@ namespace sykkelkonken.Service.Controllers
                 }
                 TimeSpan tsDate = bikeRace.FinishDate - bikeRace.StartDate;
                 int bikeRaceCategoryId = bikeRace.IsMonument ? (int)BikeRaceCategory.BikeRaceCategoryIdEnum.Monument : tsDate.TotalDays > 0 ? (int)Data.BikeRaceCategory.BikeRaceCategoryIdEnum.StageRace : (int)BikeRaceCategory.BikeRaceCategoryIdEnum.OneDay;
-                BikeRace modelBikeRace = new BikeRace()
+                var modelBikeRace = _unitOfWork.BikeRaces.GetBikeRace(bikeRace.Name);
+                if (modelBikeRace == null)
                 {
-                    Name = bikeRace.Name,
-                    CountryName = bikeRace.CountryName,
-                };
-                _unitOfWork.BikeRaces.AddBikeRace(modelBikeRace);
+                    modelBikeRace = new BikeRace()
+                    {
+                        Name = bikeRace.Name,
+                        CountryName = bikeRace.CountryName,
+                    };
+                    _unitOfWork.BikeRaces.AddBikeRace(modelBikeRace);
+                }
                 BikeRaceDetail modelBikeRaceDetail = new BikeRaceDetail()
                 {
                     BikeRaceId = modelBikeRace.BikeRaceId,
+                    Name = modelBikeRace.Name,
+                    CountryName = modelBikeRace.CountryName,
                     Year = bikeRace.Year,
                     StartDate = dtStart,
                     FinishDate = dtFinish != new DateTime() ? dtFinish : dtStart,
                     NoOfStages = bikeRace.NoOfStages > 0 ? bikeRace.NoOfStages : 0,
                     BikeRaceCategoryId = bikeRaceCategoryId,
-                    
+                    Cancelled = bikeRace.Cancelled,
+
                 };
                 _unitOfWork.BikeRaces.AddBikeRaceDetail(modelBikeRaceDetail);
                 _unitOfWork.Complete();
@@ -103,11 +113,19 @@ namespace sykkelkonken.Service.Controllers
                 {
                     TimeSpan tsDate = bikeRace.FinishDate - bikeRace.StartDate;
                     int bikeRaceCategoryId = bikeRace.IsMonument ? (int)BikeRaceCategory.BikeRaceCategoryIdEnum.Monument : tsDate.TotalDays > 0 ? (int)Data.BikeRaceCategory.BikeRaceCategoryIdEnum.StageRace : (int)BikeRaceCategory.BikeRaceCategoryIdEnum.OneDay;
-
+                    if (bikeRace.NoOfStages == 21 && bikeRace.Name.Contains("France"))
+                    {
+                        bikeRaceCategoryId = (int)BikeRaceCategory.BikeRaceCategoryIdEnum.TourDeFrance;
+                    }
+                    else if (bikeRace.NoOfStages > 15)
+                    {
+                        bikeRaceCategoryId = (int)BikeRaceCategory.BikeRaceCategoryIdEnum.GiroVuelta;
+                    }
                     modelBikeRaceDetail.StartDate = bikeRace.StartDate;
                     modelBikeRaceDetail.FinishDate = bikeRace.FinishDate;
                     modelBikeRaceDetail.NoOfStages = bikeRace.NoOfStages;
                     modelBikeRaceDetail.BikeRaceCategoryId = bikeRaceCategoryId;
+                    modelBikeRaceDetail.Cancelled = bikeRace.Cancelled;
 
                 }
                 _unitOfWork.Complete();
@@ -309,6 +327,64 @@ namespace sykkelkonken.Service.Controllers
         {
             _unitOfWork.BikeRaces.UpdateLeaderJerseyResult(leaderJerseyResult.BikeRaceDetailId, leaderJerseyResult.BikeRiderId, leaderJerseyResult.LeaderJerseyPosition, leaderJerseyResult.LeaderJerseyId);
             _unitOfWork.Complete();
+            return Ok();
+        }
+
+        [JwtAuthentication]
+        [HttpGet]
+        public IList<VMBikeRaceSeasonPlacement> GetBikeRaceSeasonPlacement(int year)
+        {
+            IList<VMBikeRaceSeasonPlacement> lstVMBikeRaces = new List<VMBikeRaceSeasonPlacement>();
+            var bikeRaces = _unitOfWork.BikeRaces.GetBikeRaceSeasonPlacements(year).ToList();
+            foreach (var bikeRace in bikeRaces.OrderBy(br => br.BikeRaceDetail.StartDate))
+            {
+                if (bikeRace.BikeRaceDetail == null)
+                {
+                    bikeRace.BikeRaceDetail = _unitOfWork.BikeRaces.GetBikeRaceDetail(bikeRace.BikeRaceDetailId);
+                }
+                VMBikeRaceSeasonPlacement vmBikeRace = new VMBikeRaceSeasonPlacement()
+                {
+                    BikeRaceSeasonPlacementId = bikeRace.BikeRaceSeasonPlacementId,
+                    BikeRaceDetailId = bikeRace.BikeRaceDetailId,
+                    Year = year,
+                    Name = bikeRace.BikeRaceDetail != null ? bikeRace.BikeRaceDetail.Name : "Fikk ikke hentet navn",
+                };
+                lstVMBikeRaces.Add(vmBikeRace);
+            }
+
+            return lstVMBikeRaces;
+        }
+
+        [JwtAuthentication]
+        [HttpPost, HttpGet]
+        public IHttpActionResult UpdateBikeRaceSeasonPlacement(int year, [FromUri] int[] bikeRaceDetailIds)
+        {
+            try
+            {
+                var bikeRaces = _unitOfWork.BikeRaces.GetBikeRaceSeasonPlacements(year).ToList();
+                List<int> bikeRaceSeasonPlacementBikeRaceDetailIds = bikeRaces.Select(br => br.BikeRaceDetailId).ToList();
+                var bikeRacesToAdd = bikeRaceDetailIds.Where(brdid => !bikeRaceSeasonPlacementBikeRaceDetailIds.Contains(brdid));
+                foreach (var brdIdToAdd in bikeRacesToAdd)
+                {
+                    this._unitOfWork.BikeRaces.AddBikeRaceSeasonPlacement(new BikeRaceSeasonPlacement()
+                    {
+                        BikeRaceDetailId = brdIdToAdd,
+                        Year = year,
+                    });
+                }
+                foreach (var bikeRace in bikeRaces)
+                {
+                    if (!bikeRaceDetailIds.Contains(bikeRace.BikeRaceDetailId))
+                    {
+                        this._unitOfWork.BikeRaces.RemoveBikeRaceSeasonPlacement(bikeRace);
+                    }
+                }
+                _unitOfWork.Complete();
+            }
+            catch (Exception ex)
+            {
+            }
+
             return Ok();
         }
     }
