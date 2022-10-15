@@ -22,6 +22,7 @@ namespace sykkelkonken.Service.Persistence
         IList<VMCompetitionTeamPointsPerBikeRace> GetCompetitionTeamResultPerBikeRace(int year);
         IList<VMCompetitionTeamPointsPerBikeRace> GetCompetitionTeamPointsPerBikeRace(int year, int bikeRaceDetailId);
 
+
         IList<VMCompetitionTeamPointsPerStage> GetCompetitionTeamPointsPerStage(int year);
 
         IList<CompetitionTeamPointsByBikeRaceCategory> GetCompetitionTeamPointsByBikeRaceCategory(int year, int competitionTeamId);

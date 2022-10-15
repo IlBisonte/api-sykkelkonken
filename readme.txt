@@ -1,2 +1,2 @@
 stats-sykkelkonken ligger på D:\stats-sykkelkonken\stats-sykkelkonken\stats-sykkelkonken\stats-sykkelkonken
-service ligger på C:\Users\Eirik.AMS\source\repos\Sykkelkonken.Service
+service ligger på C:\Users\Eirik.AMS\source\repos\IlBisonte\https-github.com-IlBisonte-sykkelkonken.service\sykkelkonken.Service
