@@ -109,19 +109,19 @@ namespace sykkelkonken.Service.Controllers
         //    }
         //}
 
-        [HttpGet]
-        public VMRefreshToken Refresh(string token, string refreshToken)
+        [HttpPost]
+        public VMRefreshToken Refresh(VMRefreshToken refreshToken)
         {
-            var principal = JwtManager.GetPrincipalFromExpiredToken(token);
+            var principal = JwtManager.GetPrincipalFromExpiredToken(refreshToken.Token);
             var username = principal.Identity.Name;
             var savedRefreshToken = _unitOfWork.Users.GetRefreshToken(username); //retrieve the refresh token from a data store
 
-            if (refreshToken != savedRefreshToken)
+            if (refreshToken.RefreshToken != savedRefreshToken)
                 throw new SecurityTokenException("Invalid refresh token");
 
             var newJwtToken = JwtManager.GenerateToken(username);
             var newRefreshToken = JwtManager.GenerateRefreshToken();
-            _unitOfWork.Users.DeleteRefreshToken(username, refreshToken);
+            _unitOfWork.Users.DeleteRefreshToken(username, refreshToken.RefreshToken);
             _unitOfWork.Users.SaveRefreshToken(username, newRefreshToken);
             _unitOfWork.Complete();
 
